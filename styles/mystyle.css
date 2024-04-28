@@ -1,0 +1,41 @@
+:root {
+    --primary: #ffd900;
+    --secondary: #eba80c; 
+    --accent: #4CAF50;
+    --background: #F5F5F5; 
+    --text: #333333; 
+    --neutral: #FFFFFF;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* .container-body {
+    margin-top: 20px;
+} */
+
+.navbar {
+    background-color: var(--primary) !important;
+    border-bottom: 10px solid var(--secondary);
+}
+
+.navbar-brand,
+.nav-link {
+    color: var(--text);
+}
+
+select, video{
+    /* padding: 5px; */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+fieldset{
+    margin: 0px;
+    margin-bottom: 20px;
+}
+
+#textareaOCR {
+    height: calc(100% - 110px); /* Adjusted height */
+}
