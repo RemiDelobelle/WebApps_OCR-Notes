@@ -27,9 +27,10 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <h5 class="mt-2" for="selectMediaDevice">Select Media Device:</h5>
-                    <select id="selectMediaDevice" class="form-control">
-                      <!-- Options go here -->
-                    </select>
+                    <div class="select-group">
+                        <select id="selectMediaDevice" class="form-control"></select>
+                        <button id="btnSelectFile" class="btn btn-secondary">Choose file</button>
+                    </div>
                 </div>
                 <video id="videoElement" class="embed-responsive-item"></video>
                 <div id="photoElement" class="hidden"></div>
@@ -39,12 +40,15 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <h5 class="mt-2">Extracted Text:</h5>
+                    <div id="loadingAnimation" class="loading-animation"></div>
                     <textarea id="textareaOCR" class="form-control hidden" rows="5"></textarea>
                     <button id="btnSave" class="btn btn-success mt-3">Save</button>
                 </div>
             </div>
         </div>
     </div>
+    
+    
     
     
     

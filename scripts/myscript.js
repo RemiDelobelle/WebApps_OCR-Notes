@@ -98,13 +98,73 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Button to trigger text extraction
     const btnExtract = document.getElementById("btnExtract");
+    const btnSelectFile = document.getElementById("btnSelectFile");
     const btnSave = document.getElementById("btnSave");
     const btnRestart = document.getElementById("btnRestart");
 
     // Event listener for the "Extract Text" button
     btnExtract.addEventListener("click", function() {
-        takeAndSavePhoto();
+        const photoElement = document.getElementById('photoElement');
+        const selectMediaDevice = document.getElementById('selectMediaDevice');
+
+        // if (photoElement.innerHTML === '' && selectMediaDevice.value !== 'None') {
+        //     console.error("No photo found to extract text.");
+        //     alert("No photo found to extract text.");
+        //     return;
+        // }
+
+        // Show loading animation
+        const loadingAnimation = document.getElementById('loadingAnimation');
+        loadingAnimation.style.display = 'block';
+
+        if (selectMediaDevice.value === 'None') {
+            // If videoElement is visible, run the normal extraction process
+            SavePhotoFromFile().then(() => {
+                // Hide loading animation when text is displayed
+                loadingAnimation.style.display = 'none';
+            });
+        } else {
+            // If videoElement is not visible, extract text from the selected image
+            takeAndSavePhoto().then(() => {
+                // Hide loading animation when text is displayed
+                loadingAnimation.style.display = 'none';
+            });
+        }
     });
+
+    // Event listener for the "Choose file" button
+    btnSelectFile.addEventListener("click", function() {
+        // Shut off the camera by hiding the video element
+        const videoElement = document.getElementById('videoElement');
+        if (videoElement) {
+            videoElement.style.display = 'none';
+        }
+
+        // Set the selectMediaDevice to "None"
+        const selectMediaDevice = document.getElementById('selectMediaDevice');
+        if (selectMediaDevice) {
+            selectMediaDevice.value = 'None';
+        }
+
+        // Create an input element of type file
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*'; // Only accept image files
+
+        // Event listener for when a file is selected
+        input.addEventListener('change', function(event) {
+            const file = event.target.files[0]; // Get the selected file
+            if (file) {
+                // Display the selected image in the photoElement div
+                displaySelectedImage(file);
+            }
+        });
+
+        // Trigger a click event on the input element to open the file explorer
+        input.click();
+    });
+
+    // Event listener for the "Save" button
     btnSave.addEventListener("click", async function() {
         try {
             // Open IndexedDB database
@@ -130,6 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error getting last photo ID:', error);
         }
     });
+
+    // Event listener for the "Restart" button
     btnRestart.addEventListener("click", async function() {
         try {
             // Open IndexedDB database
@@ -208,6 +270,58 @@ document.addEventListener('DOMContentLoaded', function() {
             await extractTextFromPhoto(photoId);
         } catch (error) {
             console.error('Error taking and saving photo:', error);
+        }
+    }
+
+    async function SavePhotoFromFile() {
+        try {
+            // Get the selected image element
+            const imgElement = document.querySelector('#photoElement img');
+            if (!imgElement) {
+                console.error("No image found in photoElement.");
+                return;
+            }
+    
+            // Create a canvas to draw the image
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+    
+            // Set canvas dimensions to match image dimensions
+            canvas.width = imgElement.naturalWidth || imgElement.width;
+            canvas.height = imgElement.naturalHeight || imgElement.height;
+    
+            // Draw the image onto the canvas
+            context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+    
+            // Get data URL of the captured image
+            const dataUrl = canvas.toDataURL('image/jpeg');
+    
+            // Convert data URL to Blob
+            const blob = await fetch(dataUrl).then(res => res.blob());
+    
+            // Open IndexedDB database
+            const db = await idb.openDB('photos', 1, {
+                upgrade(db) {
+                    const photosStore = db.createObjectStore('photos', { autoIncrement: true });
+                    // Add a text field to the object store
+                    photosStore.createIndex('text', 'text', { unique: false });
+                },
+            });
+    
+            // Save the photo to IndexedDB
+            const tx = db.transaction('photos', 'readwrite');
+            const store = tx.objectStore('photos');
+            const photoId = await store.add({ blob, text: '' }); // Add an empty text field
+            await tx.done;
+    
+            console.log("Photo saved with ID:", photoId);
+    
+            // Show saved photo
+            await showSavedPhoto(photoId);
+            // Extract text from the photo
+            await extractTextFromPhoto(photoId);
+        } catch (error) {
+            console.error('Error taking and saving photo from photoElement:', error);
         }
     }
     
@@ -303,7 +417,39 @@ document.addEventListener('DOMContentLoaded', function() {
         let rows = Math.max(minRows, lines);
         // Set the height of the textarea
         textareaOCR.rows = rows;
-    } 
+    }
+    
+    // Function to display the selected image
+    function displaySelectedImage(file) {
+        try {
+            // Create URL for the selected image
+            const imageUrl = URL.createObjectURL(file);
+
+            // Create image element
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = 'Selected Image';
+            img.style.maxWidth = '100%';
+
+            // Hide videoElement if present
+            const videoElement = document.getElementById('videoElement');
+            if (videoElement) {
+                videoElement.style.display = 'none';
+            }
+
+            // Display the selected image in the photoElement div
+            const photoElement = document.getElementById('photoElement');
+            photoElement.innerHTML = ''; // Clear previous content
+            photoElement.appendChild(img);
+
+            // Revoke the object URL after the image is loaded or no longer needed
+            img.addEventListener('load', () => {
+                URL.revokeObjectURL(imageUrl);
+            });
+        } catch (error) {
+            console.error('Error displaying selected image:', error);
+        }
+    }
     
     // Function to save text to IndexedDB
     async function saveText(photoId) {
@@ -337,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 videoElement.style.display = 'block';
                 photoElement.innerHTML = ''; // Clear any saved photo
                 photoElement.classList.add('hidden');
+                textareaOCR.value = '';
             } else {
                 console.error("No saved photo found.");
             }
