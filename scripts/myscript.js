@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Indien media device geselecteerd wordt...
         selector.addEventListener('change', function(){
-            // TODO: add here.
             var deviceId = selector.options[selector.selectedIndex].getAttribute("data-id");
             console.log("Selected device id: ", deviceId);
 
@@ -102,19 +101,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnSave = document.getElementById("btnSave");
     const btnRestart = document.getElementById("btnRestart");
 
+    const selectMediaDevice = document.getElementById('selectMediaDevice');
+    const videoElement = document.getElementById('videoElement');
+    const photoElement = document.getElementById('photoElement');
+    const loadingAnimation = document.getElementById('loadingAnimation');
+    const textareaOCR = document.getElementById('textareaOCR');
+
     // Event listener for the "Extract Text" button
     btnExtract.addEventListener("click", function() {
-        const photoElement = document.getElementById('photoElement');
-        const selectMediaDevice = document.getElementById('selectMediaDevice');
-
-        // if (photoElement.innerHTML === '' && selectMediaDevice.value !== 'None') {
-        //     console.error("No photo found to extract text.");
-        //     alert("No photo found to extract text.");
-        //     return;
-        // }
+        if (photoElement.innerHTML === '' && selectMediaDevice.value === 'None') {
+            console.error("No photo found to extract text.");
+            alert("No photo found to extract text.");
+            return;
+        }
 
         // Show loading animation
-        const loadingAnimation = document.getElementById('loadingAnimation');
         loadingAnimation.style.display = 'block';
 
         if (selectMediaDevice.value === 'None') {
@@ -135,13 +136,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener for the "Choose file" button
     btnSelectFile.addEventListener("click", function() {
         // Shut off the camera by hiding the video element
-        const videoElement = document.getElementById('videoElement');
         if (videoElement) {
             videoElement.style.display = 'none';
         }
 
         // Set the selectMediaDevice to "None"
-        const selectMediaDevice = document.getElementById('selectMediaDevice');
         if (selectMediaDevice) {
             selectMediaDevice.value = 'None';
         }
@@ -155,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('change', function(event) {
             const file = event.target.files[0]; // Get the selected file
             if (file) {
-                // Display the selected image in the photoElement div
                 displaySelectedImage(file);
             }
         });
@@ -210,9 +208,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Last item removed from IndexedDB.');
     
                 // Show the camera and hide the saved photo
-                const videoElement = document.getElementById('videoElement');
-                const photoElement = document.getElementById('photoElement');
-                const textareaOCR = document.getElementById('textareaOCR');
                 videoElement.style.display = 'block';
                 photoElement.innerHTML = '';
                 photoElement.classList.add('hidden');
@@ -348,7 +343,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 img.style.maxWidth = '100%';
                 
                 // Hide videoElement
-                const videoElement = document.getElementById('videoElement');
                 if (videoElement) {
                     videoElement.style.display = 'none';
     
@@ -360,9 +354,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Display the photo in the div
-                const photoDiv = document.getElementById('photoElement');
-                photoDiv.innerHTML = ''; // Clear previous content
-                photoDiv.appendChild(img);
+                photoElement.innerHTML = ''; // Clear previous content
+                photoElement.appendChild(img);
     
                 // Revoke the object URL after the image is loaded or no longer needed
                 img.addEventListener('load', () => {
@@ -397,7 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const { data: { text } } = await Tesseract.recognize(blob);
 
             // Display the extracted text in the textarea
-            const textareaOCR = document.getElementById('textareaOCR');
             textareaOCR.value = text;
             textareaOCR.classList.remove('hidden');
 
@@ -409,8 +401,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Change the height of the textarea based on content
     function adjustTextareaHeight() {
-        const textareaOCR = document.getElementById('textareaOCR');
-        const lineHeight = parseInt(getComputedStyle(textareaOCR).lineHeight);
         const lines = textareaOCR.value.split('\n').length;
         const minRows = textareaOCR.getAttribute('rows');
         // Calculate the number of rows based on content height
@@ -432,13 +422,11 @@ document.addEventListener('DOMContentLoaded', function() {
             img.style.maxWidth = '100%';
 
             // Hide videoElement if present
-            const videoElement = document.getElementById('videoElement');
             if (videoElement) {
                 videoElement.style.display = 'none';
             }
 
             // Display the selected image in the photoElement div
-            const photoElement = document.getElementById('photoElement');
             photoElement.innerHTML = ''; // Clear previous content
             photoElement.appendChild(img);
 
@@ -456,7 +444,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Photo ID: ", photoId);
         try {
             // Get the text from the textarea
-            const textareaOCR = document.getElementById('textareaOCR');
             const text = textareaOCR.value.trim(); // Trim any leading or trailing whitespace
 
             // Open IndexedDB database
@@ -478,8 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 console.log('Text saved successfully:', text);
 
-                const videoElement = document.getElementById('videoElement');
-                const photoElement = document.getElementById('photoElement');
                 videoElement.style.display = 'block';
                 photoElement.innerHTML = ''; // Clear any saved photo
                 photoElement.classList.add('hidden');
