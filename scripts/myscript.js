@@ -107,6 +107,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingAnimation = document.getElementById('loadingAnimation');
     const textareaOCR = document.getElementById('textareaOCR');
 
+    selectMediaDevice.addEventListener('change', function() {
+        checkSelectValue();        
+    });
+
     // Event listener for the "Extract Text" button
     btnExtract.addEventListener("click", function() {
         if (photoElement.innerHTML === '' && selectMediaDevice.value === 'None') {
@@ -135,6 +139,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listener for the "Choose file" button
     btnSelectFile.addEventListener("click", function() {
+        // Closes camera stream
+        _mediaStream.getTracks().forEach(track => {
+            track.stop();
+        });
         // Shut off the camera by hiding the video element
         if (videoElement) {
             videoElement.style.display = 'none';
@@ -165,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener for the "Save" button
     btnSave.addEventListener("click", async function() {
         try {
+            checkSelectValue()
             // Open IndexedDB database
             const db = await idb.openDB('photos', 1);
     
@@ -212,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 photoElement.innerHTML = '';
                 photoElement.classList.add('hidden');
                 textareaOCR.value = '';
+                checkSelectValue();
             } else {
                 console.log('No item found in IndexedDB.');
             }
@@ -465,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 console.log('Text saved successfully:', text);
 
-                videoElement.style.display = 'block';
+                // videoElement.style.display = 'block';
                 photoElement.innerHTML = ''; // Clear any saved photo
                 photoElement.classList.add('hidden');
                 textareaOCR.value = '';
@@ -478,8 +488,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }   
 });
 
+function checkSelectValue() {
+    if (selectMediaDevice.value === 'None') {
+        videoElement.style.display = 'none';
+    } else {
+        videoElement.style.display = 'block';
+    }
+}
+
 window.onload = async function() {
     try {
+        checkSelectValue();
         // Open IndexedDB database
         const db = await idb.openDB('photos', 1);
 
