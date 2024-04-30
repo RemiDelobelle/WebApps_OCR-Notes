@@ -119,30 +119,37 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // checkPrevDBItem();
+
         // Show loading animation
         loadingAnimation.style.display = 'block';
 
-        if (selectMediaDevice.value === 'None') {
-            // If videoElement is visible, run the normal extraction process
-            SavePhotoFromFile().then(() => {
-                // Hide loading animation when text is displayed
-                loadingAnimation.style.display = 'none';
-            });
-        } else {
-            // If videoElement is not visible, extract text from the selected image
-            takeAndSavePhoto().then(() => {
-                // Hide loading animation when text is displayed
-                loadingAnimation.style.display = 'none';
-            });
-        }
+        // Check and remove the previous DB item if its text is empty
+        checkPrevDBItem().then(() => {
+            if (selectMediaDevice.value === 'None') {
+                // If videoElement is visible, run the normal extraction process
+                SavePhotoFromFile().then(() => {
+                    // Hide loading animation when text is displayed
+                    loadingAnimation.style.display = 'none';
+                });
+            } else {
+                // If videoElement is not visible, extract text from the selected image
+                takeAndSavePhoto().then(() => {
+                    // Hide loading animation when text is displayed
+                    loadingAnimation.style.display = 'none';
+                });
+            }
+        });
     });
 
     // Event listener for the "Choose file" button
     btnSelectFile.addEventListener("click", function() {
         // Closes camera stream
-        _mediaStream.getTracks().forEach(track => {
-            track.stop();
-        });
+        if (_mediaStream) {
+            _mediaStream.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
         // Shut off the camera by hiding the video element
         if (videoElement) {
             videoElement.style.display = 'none';
@@ -493,6 +500,38 @@ function checkSelectValue() {
         videoElement.style.display = 'none';
     } else {
         videoElement.style.display = 'block';
+    }
+}
+
+async function checkPrevDBItem() {
+    try {
+        // Open IndexedDB database
+        const db = await idb.openDB('photos', 1);
+
+        // Get all keys in the object store
+        const keys = await db.getAllKeys('photos');
+
+        // Get the ID of the last item
+        const lastItemId = keys[keys.length - 1];
+
+        // If there are items in the database
+        if (lastItemId !== undefined) {
+            // Get the last item from the object store
+            const lastItem = await db.get('photos', lastItemId);
+
+            // Check if the last item contains text
+            if (lastItem.text.trim() !== '') {
+                console.log('Last item contains text. Skipping deletion.');
+            } else {
+                // Delete the last item from the object store
+                await db.delete('photos', lastItemId);
+                console.log('Last item removed from IndexedDB.');
+            }
+        } else {
+            console.log('No item found in IndexedDB.');
+        }
+    } catch (error) {
+        console.error('Error checking previous DB item:', error);
     }
 }
 
