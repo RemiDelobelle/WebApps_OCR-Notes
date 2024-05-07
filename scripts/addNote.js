@@ -192,219 +192,247 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error removing last item from IndexedDB:', error);
         }
-    });
-    
-    async function takeAndSavePhoto() {
-        try {
-            if (!_mediaStream) {
-                console.error("No media stream available.");
-                return;
-            }
-    
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            const video = document.getElementById("videoElement");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-            const dataUrl = canvas.toDataURL('image/jpeg');
-    
-            const blob = await fetch(dataUrl).then(res => res.blob());
-    
-            const db = await idb.openDB('photos', 1, {
-                upgrade(db) {
-                    const photosStore = db.createObjectStore('photos', { autoIncrement: true });
-                    // Add a text field to the object store
-                    photosStore.createIndex('text', 'text', { unique: false });
-                },
-            });
-    
-            const tx = db.transaction('photos', 'readwrite');
-            const store = tx.objectStore('photos');
-            const photoId = await store.add({ blob, text: '' }); // Add no text to text field
-            await tx.done;
-    
-            console.log("Photo saved with ID:", photoId);
-    
-            await showSavedPhoto(photoId);
-            await extractTextFromPhoto(photoId);
-        } catch (error) {
-            console.error('Error taking and saving photo:', error);
-        }
-    }
+    });  
+});
 
-    async function savePhotoFromFile() {
-        try {
-            const imgElement = document.querySelector('#photoElement img');
-            if (!imgElement) {
-                console.error("No image found in photoElement.");
-                return;
-            }
-    
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-    
-            canvas.width = imgElement.naturalWidth || imgElement.width;
-            canvas.height = imgElement.naturalHeight || imgElement.height;
-    
-            context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
-    
-            const dataUrl = canvas.toDataURL('image/jpeg');
-    
-            const blob = await fetch(dataUrl).then(res => res.blob());
-    
-            const db = await idb.openDB('photos', 1, {
-                upgrade(db) {
-                    const photosStore = db.createObjectStore('photos', { autoIncrement: true });
-                    photosStore.createIndex('text', 'text', { unique: false });
-                },
-            });
-    
-            const tx = db.transaction('photos', 'readwrite');
-            const store = tx.objectStore('photos');
-            const photoId = await store.add({ blob, text: '' }); // Add an empty text field
-            console.log("Photo saved with ID:", photoId);
-            await tx.done;
-    
-            console.log("Photo saved with ID:", photoId);
-    
-            await showSavedPhoto(photoId);
-            await extractTextFromPhoto(photoId);
-        } catch (error) {
-            console.error('Error taking and saving photo from photoElement:', error);
-        }
-    }
-    
-    async function showSavedPhoto(photoId) {
-        try {
-            const db = await idb.openDB('photos', 1);
-    
-            const tx = db.transaction('photos', 'readonly');
-            const store = tx.objectStore('photos');
-            const photoData = await store.get(photoId);
-    
-            if (photoData) {
-                const blob = photoData.blob;
-                const dataUrl = URL.createObjectURL(blob);
-    
-                const img = document.createElement('img');
-                img.src = dataUrl;
-                img.alt = 'Saved Photo';
-                img.style.maxWidth = '100%';
-                
-                if (videoElement) {
-                    videoElement.style.display = 'none';
-    
-                    const parentDiv = videoElement.parentElement;
-                    parentDiv.classList.remove('embed-responsive', 'embed-responsive-16by9');
-                    parentDiv.classList.add('custom-aspect-ratio');
-                }
 
-                photoElement.innerHTML = ''; // Clear previous content
-                photoElement.appendChild(img);
-    
-                img.addEventListener('load', () => {
-                    URL.revokeObjectURL(dataUrl);
-                });
+window.onload = async function() {
+    try {
+        checkSelectValue();
+        const db = await idb.openDB('photos', 1);
+
+        const keys = await db.getAllKeys('photos');
+
+        const lastItemId = keys[keys.length - 1];
+
+        if (lastItemId !== undefined) {
+            const lastItem = await db.get('photos', lastItemId);
+
+            if (lastItem.text.trim() !== '') {
+                console.log('Last item contains text. Skipping deletion.');
             } else {
-                console.error("No saved photo found.");
+                await db.delete('photos', lastItemId);
+                console.log('Last item removed from IndexedDB.');
             }
-        } catch (error) {
-            console.error('Error displaying saved photo:', error);
+        } else {
+            console.log('No item found in IndexedDB.');
         }
+    } catch (error) {
+        console.error('Error removing last item from IndexedDB on page load:', error);
     }
-    
-    async function extractTextFromPhoto(photoId) {
-        try {
-            const db = await idb.openDB('photos', 1);
+};
 
-            const tx = db.transaction('photos', 'readonly');
-            const store = tx.objectStore('photos');
-            const photoData = await store.get(photoId);
+
+async function takeAndSavePhoto() {
+    try {
+        if (!_mediaStream) {
+            console.error("No media stream available.");
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const video = document.getElementById("videoElement");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg');
+
+        const blob = await fetch(dataUrl).then(res => res.blob());
+
+        const db = await idb.openDB('photos', 1, {
+            upgrade(db) {
+                const photosStore = db.createObjectStore('photos', { autoIncrement: true });
+                // Add a text field to the object store
+                photosStore.createIndex('text', 'text', { unique: false });
+            },
+        });
+
+        const tx = db.transaction('photos', 'readwrite');
+        const store = tx.objectStore('photos');
+        const photoId = await store.add({ blob, text: '' }); // Add no text to text field
+        await tx.done;
+
+        console.log("Photo saved with ID:", photoId);
+
+        await showSavedPhoto(photoId);
+        await extractTextFromPhoto(photoId);
+    } catch (error) {
+        console.error('Error taking and saving photo:', error);
+    }
+}
+
+async function savePhotoFromFile() {
+    try {
+        const imgElement = document.querySelector('#photoElement img');
+        if (!imgElement) {
+            console.error("No image found in photoElement.");
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        canvas.width = imgElement.naturalWidth || imgElement.width;
+        canvas.height = imgElement.naturalHeight || imgElement.height;
+
+        context.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg');
+
+        const blob = await fetch(dataUrl).then(res => res.blob());
+
+        const db = await idb.openDB('photos', 1, {
+            upgrade(db) {
+                const photosStore = db.createObjectStore('photos', { autoIncrement: true });
+                photosStore.createIndex('text', 'text', { unique: false });
+            },
+        });
+
+        const tx = db.transaction('photos', 'readwrite');
+        const store = tx.objectStore('photos');
+        const photoId = await store.add({ blob, text: '' }); // Add an empty text field
+        console.log("Photo saved with ID:", photoId);
+        await tx.done;
+
+        console.log("Photo saved with ID:", photoId);
+
+        await showSavedPhoto(photoId);
+        await extractTextFromPhoto(photoId);
+    } catch (error) {
+        console.error('Error taking and saving photo from photoElement:', error);
+    }
+}
+
+async function showSavedPhoto(photoId) {
+    try {
+        const db = await idb.openDB('photos', 1);
+
+        const tx = db.transaction('photos', 'readonly');
+        const store = tx.objectStore('photos');
+        const photoData = await store.get(photoId);
+
+        if (photoData) {
             const blob = photoData.blob;
-
-            if (!blob) {
-                console.error("No saved photo found.");
-                return;
-            }
-
-            // Use Tesseract.js to recognize text from the image blob
-            const { data: { text } } = await Tesseract.recognize(blob);
-
-            textareaOCR.value = text;
-            textareaOCR.classList.remove('hidden');
-
-            adjustTextareaHeight();
-        } catch (error) {
-            console.error('Error extracting text from photo:', error);
-        }
-    }
-
-    function adjustTextareaHeight() {
-        const lines = textareaOCR.value.split('\n').length;
-        const minRows = textareaOCR.getAttribute('rows');
-
-        // Calculate the number of rows based on content height
-        let rows = Math.max(minRows, lines);
-        textareaOCR.rows = rows;
-    }
-    
-    function displaySelectedImage(file) {
-        try {
-            const imageUrl = URL.createObjectURL(file);
+            const dataUrl = URL.createObjectURL(blob);
 
             const img = document.createElement('img');
-            img.src = imageUrl;
-            img.alt = 'Selected Image';
+            img.src = dataUrl;
+            img.alt = 'Saved Photo';
             img.style.maxWidth = '100%';
-
+            
             if (videoElement) {
                 videoElement.style.display = 'none';
+
+                const parentDiv = videoElement.parentElement;
+                parentDiv.classList.remove('embed-responsive', 'embed-responsive-16by9');
+                parentDiv.classList.add('custom-aspect-ratio');
             }
 
             photoElement.innerHTML = ''; // Clear previous content
             photoElement.appendChild(img);
 
             img.addEventListener('load', () => {
-                URL.revokeObjectURL(imageUrl);
+                URL.revokeObjectURL(dataUrl);
             });
-        } catch (error) {
-            console.error('Error displaying selected image:', error);
+        } else {
+            console.error("No saved photo found.");
         }
+    } catch (error) {
+        console.error('Error displaying saved photo:', error);
     }
-    
-    async function saveText(photoId) {
-        console.log("Photo ID: ", photoId);
-        try {
-            const text = textareaOCR.value.trim(); // Trim any leading or trailing whitespace
+}
 
-            const db = await idb.openDB('photos', 1);
+async function extractTextFromPhoto(photoId) {
+    try {
+        const db = await idb.openDB('photos', 1);
 
-            const tx = db.transaction('photos', 'readwrite');
-            const store = tx.objectStore('photos');
+        const tx = db.transaction('photos', 'readonly');
+        const store = tx.objectStore('photos');
+        const photoData = await store.get(photoId);
+        const blob = photoData.blob;
 
-            const photoData = await store.get(photoId);
-
-            if (photoData) {
-                photoData.text = text;
-
-                await store.put(photoData, photoId);
-
-                console.log('Text saved successfully:', text);
-
-                // videoElement.style.display = 'block';
-                photoElement.innerHTML = ''; // Clear any saved photo
-                photoElement.classList.add('hidden');
-                textareaOCR.value = '';
-            } else {
-                console.error("No saved photo found.");
-            }
-        } catch (error) {
-            console.error('Error saving text:', error);
+        if (!blob) {
+            console.error("No saved photo found.");
+            return;
         }
-    }   
-});
+
+        // Use Tesseract.js to recognize text from the image blob
+        const { data: { text } } = await Tesseract.recognize(blob);
+
+        textareaOCR.value = text;
+        textareaOCR.classList.remove('hidden');
+
+        adjustTextareaHeight();
+    } catch (error) {
+        console.error('Error extracting text from photo:', error);
+    }
+}
+
+function adjustTextareaHeight() {
+    const lines = textareaOCR.value.split('\n').length;
+    const minRows = textareaOCR.getAttribute('rows');
+
+    // Calculate the number of rows based on content height
+    let rows = Math.max(minRows, lines);
+    textareaOCR.rows = rows;
+}
+
+function displaySelectedImage(file) {
+    try {
+        const imageUrl = URL.createObjectURL(file);
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = 'Selected Image';
+        img.style.maxWidth = '100%';
+
+        if (videoElement) {
+            videoElement.style.display = 'none';
+        }
+
+        photoElement.innerHTML = ''; // Clear previous content
+        photoElement.appendChild(img);
+
+        img.addEventListener('load', () => {
+            URL.revokeObjectURL(imageUrl);
+        });
+    } catch (error) {
+        console.error('Error displaying selected image:', error);
+    }
+}
+
+async function saveText(photoId) {
+    console.log("Photo ID: ", photoId);
+    try {
+        const text = textareaOCR.value.trim();
+
+        const db = await idb.openDB('photos', 1);
+
+        const tx = db.transaction('photos', 'readwrite');
+        const store = tx.objectStore('photos');
+
+        const photoData = await store.get(photoId);
+
+        if (photoData) {
+            photoData.text = text;
+
+            await store.put(photoData, photoId);
+
+            console.log('Text saved successfully:', text);
+
+            // videoElement.style.display = 'block';
+            photoElement.innerHTML = ''; // Clear any saved photo
+            photoElement.classList.add('hidden');
+            textareaOCR.value = '';
+        } else {
+            console.error("No saved photo found.");
+        }
+    } catch (error) {
+        console.error('Error saving text:', error);
+    }
+}
 
 function checkSelectValue() {
     if (selectMediaDevice.value === 'None') {
@@ -438,29 +466,3 @@ async function checkPrevDBItem() {
         console.error('Error checking previous DB item:', error);
     }
 }
-
-window.onload = async function() {
-    try {
-        checkSelectValue();
-        const db = await idb.openDB('photos', 1);
-
-        const keys = await db.getAllKeys('photos');
-
-        const lastItemId = keys[keys.length - 1];
-
-        if (lastItemId !== undefined) {
-            const lastItem = await db.get('photos', lastItemId);
-
-            if (lastItem.text.trim() !== '') {
-                console.log('Last item contains text. Skipping deletion.');
-            } else {
-                await db.delete('photos', lastItemId);
-                console.log('Last item removed from IndexedDB.');
-            }
-        } else {
-            console.log('No item found in IndexedDB.');
-        }
-    } catch (error) {
-        console.error('Error removing last item from IndexedDB on page load:', error);
-    }
-};
