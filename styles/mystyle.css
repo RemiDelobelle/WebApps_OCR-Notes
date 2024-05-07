@@ -60,13 +60,19 @@ fieldset{
     height: 60px;
     animation: spin 2s ease-in-out infinite;
     position: absolute;
-    top: calc(35% - 30px);
+    top: calc(25% - 30px);
     left: calc(50% - 30px);
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 1000px) {
+    .loading-animation {
+        top: calc(45% - 30px);
+    }
 }
 
 #textareaOCR {

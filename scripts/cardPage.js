@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const cardContainer = document.getElementById('cardContainer');
-    const searchBar = document.getElementById('searchBar');
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
