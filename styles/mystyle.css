@@ -73,6 +73,10 @@ fieldset{
     height: calc(100% - 110px);
 }
 
+#searchBar {
+    padding: 5px;
+}
+
 .card-wrapper {
     padding: 5px;
     margin-bottom: 0;

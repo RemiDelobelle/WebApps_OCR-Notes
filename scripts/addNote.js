@@ -407,6 +407,7 @@ async function saveText(photoId) {
     console.log("Photo ID: ", photoId);
     try {
         const text = textareaOCR.value.trim();
+        const escapedText = await escapeHTML(text);
 
         const db = await idb.openDB('photos', 1);
 
@@ -416,11 +417,11 @@ async function saveText(photoId) {
         const photoData = await store.get(photoId);
 
         if (photoData) {
-            photoData.text = text;
+            photoData.text = escapedText;
 
             await store.put(photoData, photoId);
 
-            console.log('Text saved successfully:', text);
+            console.log('Text saved successfully:', escapedText);
 
             // videoElement.style.display = 'block';
             photoElement.innerHTML = ''; // Clear any saved photo
@@ -432,6 +433,21 @@ async function saveText(photoId) {
     } catch (error) {
         console.error('Error saving text:', error);
     }
+}
+
+async function escapeHTML(html) {
+    return html.replace(/[&<>"'`=\/]/g, function(match) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            "`": '&#96;',
+            '=': '&#x3D;',
+            '/': '&#x2F;'
+        }[match];
+    });
 }
 
 function checkSelectValue() {
