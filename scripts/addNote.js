@@ -1,26 +1,5 @@
 var _mediaStream = null;
 
-window.addEventListener('load', function() {
-    console.log("Window loaded.");
-
-    // Service worker registeren.
-    if ('serviceWorker' in navigator) 
-    {
-        var rootPath = window.location.origin; // Get the root path of the current URL
-        var serviceWorkerPath = rootPath + "/service-worker.js"; // Absolute path to service worker
-        this.navigator.serviceWorker.register(serviceWorkerPath)
-        .then((registration) => {
-          console.log('Registered: ');
-          console.log(registration);
-          })
-        .catch((err) => console.log(err));
-    } 
-    else
-    {
-      alert('No service worker support in this browser.');
-    }
-});
-
 document.addEventListener('DOMContentLoaded', function() {
     // Zoek naar media devices.
     if('mediaDevices' in navigator)
@@ -52,39 +31,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Indien media device geselecteerd wordt...
         selector.addEventListener('change', function(){
-            var deviceId = selector.options[selector.selectedIndex].getAttribute("data-id");
-            console.log("Selected device id: ", deviceId);
+            try {
+                var deviceId = selector.options[selector.selectedIndex].getAttribute("data-id");
+                console.log("Selected device id: ", deviceId);
 
-            // Eventuele oude streams afsluiten (camera vrijgeven).
-            if(_mediaStream != null)
-            {
-                _mediaStream.getTracks().forEach(track => {
-                    track.stop();
-                });
-            }
+                // Eventuele oude streams afsluiten (camera vrijgeven).
+                if(_mediaStream != null)
+                {
+                    _mediaStream.getTracks().forEach(track => {
+                        track.stop();
+                    });
+                }
 
-            // Als beeld gevraagd wordt...
-            if(deviceId != "None")
-            {
-                // Verzoeken tot toelating en koppelen met camera.
-                // Zie:https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-                navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: deviceId}
-                })
-                .then(mediaStream => {
-                    _mediaStream = mediaStream;
-                    console.log("mediaStream available");
+                // Als beeld gevraagd wordt...
+                if(deviceId != "None")
+                {
+                    // Verzoeken tot toelating en koppelen met camera.
+                    // Zie:https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+                    navigator.mediaDevices.getUserMedia({
+                        video: { deviceId: deviceId}
+                    })
+                    .then(mediaStream => {
+                        _mediaStream = mediaStream;
+                        console.log("mediaStream available");
 
-                    // Koppelen aan video element.
-                    var video = document.querySelector("video");
-                    video.srcObject = mediaStream;
+                        // Koppelen aan video element.
+                        var video = document.querySelector("video");
+                        video.srcObject = mediaStream;
 
-                    // Indien geladen, start beeld.
-                    video.onloadedmetadata = function(e) {
-                        video.play();
-                    };
-                })
-                .catch(error => console.log(error));
+                        // Indien geladen, start beeld.
+                        video.onloadedmetadata = function(e) {
+                            video.play();
+                        };
+                    })
+                    .catch(error => console.log(error));
+                }
+            } catch (error) {
+                console.log("Error: ", error);
             }   
         });
     }
@@ -92,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
     {
         alert('No media devices support in this browser.');
     }
-
 
     const btnExtract = document.getElementById("btnExtract");
     const btnSelectFile = document.getElementById("btnSelectFile");
@@ -117,13 +99,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // checkPrevDBItem();
-
+        textareaOCR.innerHTML = '';
         loadingAnimation.style.display = 'block';
 
         // Check and remove the previous DB item if its text is empty
         checkPrevDBItem().then(() => {
             if (selectMediaDevice.value === 'None') {
-                SavePhotoFromFile().then(() => {
+                savePhotoFromFile().then(() => {
                     loadingAnimation.style.display = 'none';
                 });
             } else {
@@ -252,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function SavePhotoFromFile() {
+    async function savePhotoFromFile() {
         try {
             const imgElement = document.querySelector('#photoElement img');
             if (!imgElement) {
@@ -282,6 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tx = db.transaction('photos', 'readwrite');
             const store = tx.objectStore('photos');
             const photoId = await store.add({ blob, text: '' }); // Add an empty text field
+            console.log("Photo saved with ID:", photoId);
             await tx.done;
     
             console.log("Photo saved with ID:", photoId);
