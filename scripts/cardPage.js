@@ -1,18 +1,41 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const cardContainer = document.getElementById('cardContainer');
+    const searchBar = document.getElementById('searchBar');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
 
     const db = await idb.openDB('photos', 1);
     const tx = db.transaction('photos', 'readonly');
     const store = tx.objectStore('photos');
     const notes = await store.getAll();
-    
+
+    renderNotes(notes);
+
+    searchForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const filteredNotes = notes.filter((note) => note.text.toLowerCase().includes(searchTerm));
+        renderNotes(filteredNotes);
+    });
+
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        renderNotes(notes);
+    });
+});
+
+
+function renderNotes(notes)
+{
+    cardContainer.innerHTML = '';
     notes.forEach((note) => {
         if (note.text != "") {
             const card = createCard(note);
             cardContainer.appendChild(card);
         }
     });
-});
+}
 
 function createCard(note)
 {

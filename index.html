@@ -27,14 +27,14 @@
     <div class="container mt-3">
         <div class="row">
             <div class="col-md" id="searchBar">
-                <form>
+                <form id="searchForm">
                     <div class="input-group">
-                        <input type="text" class="form-control" id="search" required>
+                        <input type="text" class="form-control" id="searchInput" required>
                         <div class="input-group-append">
-                            <span class="input-group-text"><i class="material-icons">search</i></span>
+                            <button class="input-group-text" type="submit"><i class="material-icons">search</i></button>
                         </div>
                         <div class="input-group-append">
-                            <span class="input-group-text"><i class="material-icons">close</i></span>
+                            <button class="input-group-text" type="button" id="clearSearch"><i class="material-icons">close</i></button>
                         </div>
                     </div>
                 </form>
