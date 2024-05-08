@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // checkPrevDBItem();
         textareaOCR.innerHTML = '';
         loadingAnimation.style.display = 'block';
 
@@ -149,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     btnSave.addEventListener("click", async function() {
         try {
+            textareaOCR.rows = 8;
             checkSelectValue()
             const db = await idb.openDB('photos', 1);
     
@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     btnRestart.addEventListener("click", async function() {
         try {
+            textareaOCR.rows = 8;
             const db = await idb.openDB('photos', 1);
     
             const keys = await db.getAllKeys('photos');
@@ -198,24 +199,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.onload = async function() {
     try {
-        checkSelectValue();
+        videoElement.style.display = 'none';
+        textareaOCR.rows = 8;
         const db = await idb.openDB('photos', 1);
 
-        const keys = await db.getAllKeys('photos');
+        // Check if the 'photos' object store exists before proceeding
+        if (db.objectStoreNames.contains('photos')) {
+            const keys = await db.getAllKeys('photos');
 
-        const lastItemId = keys[keys.length - 1];
+            const lastItemId = keys[keys.length - 1];
 
-        if (lastItemId !== undefined) {
-            const lastItem = await db.get('photos', lastItemId);
+            if (lastItemId !== undefined) {
+                const lastItem = await db.get('photos', lastItemId);
 
-            if (lastItem.text.trim() !== '') {
-                console.log('Last item contains text. Skipping deletion.');
+                if (lastItem.text.trim() !== '') {
+                    console.log('Last item contains text. Skipping deletion.');
+                } else {
+                    await db.delete('photos', lastItemId);
+                    console.log('Last item removed from IndexedDB.');
+                }
             } else {
-                await db.delete('photos', lastItemId);
-                console.log('Last item removed from IndexedDB.');
+                console.log('No item found in IndexedDB.');
             }
         } else {
-            console.log('No item found in IndexedDB.');
+            console.log("Object store 'photos' not found.");
         }
     } catch (error) {
         console.error('Error removing last item from IndexedDB on page load:', error);
@@ -241,6 +248,7 @@ async function takeAndSavePhoto() {
 
         const blob = await fetch(dataUrl).then(res => res.blob());
 
+        // Open IndexedDB database
         const db = await idb.openDB('photos', 1, {
             upgrade(db) {
                 const photosStore = db.createObjectStore('photos', { autoIncrement: true });
