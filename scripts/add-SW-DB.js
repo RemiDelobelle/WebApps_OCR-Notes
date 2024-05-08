@@ -15,4 +15,11 @@ window.addEventListener('load', function() {
   {
     alert('No service worker support in this browser.');
   }
+  
+  var request = indexedDB.open("photos", 1);
+  request.onupgradeneeded = function(event) {
+      var db = event.target.result;
+      var objectStore = db.createObjectStore("photos", { autoIncrement: true });
+      objectStore.createIndex("text", "text", { unique: false });
+  };
 });
