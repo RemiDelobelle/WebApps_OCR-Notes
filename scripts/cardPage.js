@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     searchForm.addEventListener('submit', function(event) {
         event.preventDefault();
-        const searchTerm = searchInput.value.trim().toLowerCase();
+        const searchTerm = escapeHTML(searchInput.value.trim().toLowerCase());
         const filteredNotes = notes.filter((note) => note.text.toLowerCase().includes(searchTerm));
         renderNotes(filteredNotes);
     });
@@ -55,6 +55,21 @@ function createCard(note, index)
         </div>
     `;
     return card;
+}
+
+function escapeHTML(html) {
+    return html.replace(/[&<>"'`=\/]/g, function(match) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            "`": '&#96;',
+            '=': '&#x3D;',
+            '/': '&#x2F;'
+        }[match];
+    });
 }
 
 function deleteButtonClickHandler(notes)
