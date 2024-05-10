@@ -248,11 +248,9 @@ async function takeAndSavePhoto() {
 
         const blob = await fetch(dataUrl).then(res => res.blob());
 
-        // Open IndexedDB database
         const db = await idb.openDB('photos', 1, {
             upgrade(db) {
                 const photosStore = db.createObjectStore('photos', { autoIncrement: true });
-                // Add a text field to the object store
                 photosStore.createIndex('text', 'text', { unique: false });
             },
         });

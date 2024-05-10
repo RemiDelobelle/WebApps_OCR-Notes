@@ -63,7 +63,7 @@ function deleteButtonClickHandler(notes)
     deleteBtns.forEach((btn) => {
         btn.addEventListener('click', async function(event) {
             event.preventDefault();
-            const index = parseInt(btn.id.split('-')[1]); // Extracting the index from the button id
+            const index = parseInt(btn.id.split('-')[1]);
             console.log("Btn id:" + btn.id);
             console.log("Delete index:" + index);
             const note = notes[index];
