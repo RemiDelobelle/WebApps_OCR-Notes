@@ -429,7 +429,6 @@ async function saveText(photoId) {
 
             console.log('Text saved successfully:', escapedText);
 
-            // videoElement.style.display = 'block';
             photoElement.innerHTML = ''; // Clear any saved photo
             photoElement.classList.add('hidden');
             textareaOCR.value = '';
