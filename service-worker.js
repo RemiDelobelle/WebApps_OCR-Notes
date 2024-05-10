@@ -18,7 +18,8 @@ const staticFiles = [
     'scripts/tesseract-2.1.0.min.js',
     'scripts/index-4.0.3-min.js',
     'https://fonts.googleapis.com/icon?family=Material+Icons',
-    'pages/fallback.html'
+    'pages/fallback.html',
+    'manifest.json',
 ];
 
 // Functie om de static files te cachen.
